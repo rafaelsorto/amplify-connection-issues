@@ -1,0 +1,71 @@
+type Store
+  @model
+  @auth(
+    rules: [
+      { allow: groups, groups: ["admins"] }
+      { allow: owner, ownerField: "merchant" }
+      { allow: owner, ownerField: "staff" }
+    ]
+  ) {
+  id: ID!
+  name: String!
+  locations: [StoreLocation] @connection(keyName: "byStore", fields: ["id"])
+  merchant: String
+  staff: [String]
+}
+
+type StoreLocation
+  @model
+  @key(name: "byStore", fields: ["storeID"])
+  @auth(
+    rules: [
+      { allow: groups, groups: ["admins"] }
+      { allow: owner, ownerField: "merchant" }
+      { allow: owner, ownerField: "staff" }
+    ]
+  ) {
+  id: ID!
+  name: String!
+  storeID: ID!
+  store: Store @connection(fields: ["storeID"])
+  carts: [Cart]
+    @connection(keyName: "byStoreLocation", fields: ["id"])
+    @auth(
+      rules: [
+        { allow: groups, groups: ["admins"] }
+        { allow: owner, ownerField: "merchant" }
+        { allow: owner, ownerField: "staff" }
+      ]
+    )
+  merchant: String
+  staff: [String]
+}
+
+type Cart
+  @model
+  @key(name: "byStoreLocation", fields: ["storeLocationID"])
+  @auth(
+    rules: [
+      { allow: groups, groups: ["admins"] }
+      { allow: private, provider: iam, operations: [create, update, read] }
+    ]
+  ) {
+  id: ID!
+  storeLocationID: ID!
+  storeLocation: StoreLocation @connection(fields: ["storeLocationID"])
+  items: [CartItem]
+  currency: String!
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type CartItem {
+  id: ID!
+  title: String!
+  quantity: Int!
+  weight: Int!
+  tags: String!
+  total: Int!
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
